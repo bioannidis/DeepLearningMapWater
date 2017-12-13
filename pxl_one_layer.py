@@ -22,9 +22,10 @@ def bias_variable(shape):
 
 
 #loading data from the server. This will download the dataset in your curernt directory and then load it.
-url = 'http://umnlcc.cs.umn.edu/WaterDatasets/PixelLevelDataset_Version1.mat'
-urllib.request.urlretrieve(url,'PixelLevelDataset_Version1.mat')
-data = matlab.loadmat('PixelLevelDataset_Version1.mat')
+#url = 'http://umnlcc.cs.umn.edu/WaterDatasets/PixelLevelDataset_Version2.mat'
+#urllib.request.urlretrieve(url,'PixelLevelDataset_Version2.mat')
+
+data = matlab.loadmat('PixelLevelDataset_Version2.mat')
 print('Dataset Loaded ...')
 
 
@@ -51,27 +52,27 @@ ulabels = np.unique(data['Y_all'])
 uqbits = np.unique(data['QUALITY_all'])
 num_labels = np.unique(data['Y_all']).shape[0]
 num_qbits = 9
-label_dist = np.zeros((num_qbits,num_labels))
-for i in uqbits:
-    for j in ulabels:
-        label_dist[i-1][j-1] = np.sum(np.logical_and(data['Y_all']==j,data['QUALITY_all']==i))
+#label_dist = np.zeros((num_qbits,num_labels))
+#for i in uqbits:
+#    for j in ulabels:
+#        label_dist[i-1][j-1] = np.sum(np.logical_and(data['Y_all']==j,data['QUALITY_all']==i))
 
 
-label_dist = np.transpose(label_dist)
-t1 = np.array([1, 2, 3])
-t2 = np.array([2, 3, 5])
-p1 = plt.bar(uqbits+0.35,label_dist[0],color='blue',width=0.3)
-p2 = plt.bar(uqbits+0.35,label_dist[1],color='green',bottom=label_dist[0],width=0.3)
-p3 = plt.bar(uqbits+0.35,label_dist[2],color='yellow',bottom=label_dist[0]+ label_dist[1],width=0.3)
-plt.ylabel('Count')
-plt.xlabel('Quality Value')
-plt.title('Label Distribution with respect to Quality Information')
-plt.xticks(uqbits+0.5, ('1', '2', '3', '4', '5', '6', '7', '8', '9'))
-plt.legend((p1[0], p2[0],p3[0]), ('Water', 'Land', 'Unknown'))
+#label_dist = np.transpose(label_dist)
+#t1 = np.array([1, 2, 3])
+#t2 = np.array([2, 3, 5])
+#p1 = plt.bar(uqbits+0.35,label_dist[0],color='blue',width=0.3)
+#p2 = plt.bar(uqbits+0.35,label_dist[1],color='green',bottom=label_dist[0],width=0.3)
+#p3 = plt.bar(uqbits+0.35,label_dist[2],color='yellow',bottom=label_dist[0]+ label_dist[1],width=0.3)
+#plt.ylabel('Count')
+#plt.xlabel('Quality Value')
+#plt.title('Label Distribution with respect to Quality Information')
+#plt.xticks(uqbits+0.5, ('1', '2', '3', '4', '5', '6', '7', '8', '9'))
+#plt.legend((p1[0], p2[0],p3[0]), ('Water', 'Land', 'Unknown'))
 #plt.show()
 
-print('Overall ' + str(np.sum(data['Y_all']!=3)) + ' instances have a valid label')
-print('The skew (#water pixels/#land pixels) of this dataset is ' + str(np.sum(data['Y_all']==1)*1.0/np.sum(data['Y_all']==2)))
+#print('Overall ' + str(np.sum(data['Y_all']!=3)) + ' instances have a valid label')
+#print('The skew (#water pixels/#land pixels) of this dataset is ' + str(np.sum(data['Y_all']==1)*1.0/np.sum(data['Y_all']==2)))
 
 
 # In[10]:
@@ -92,10 +93,11 @@ water_inds = np.where(np.logical_and(Y==1, QUALITY<=9))[0]
 land_inds = np.where(np.logical_and(Y==2, QUALITY<=9))[0]
 
 
-
+train_pct=0.8
+test_pct=0.2
 # selecting random samples for training and testing
-num_train_samples = 100000
-num_test_samples = 400000
+num_train_samples = int(train_pct*min(len(water_inds),len(land_inds)))
+num_test_samples = int(test_pct*min(len(water_inds),len(land_inds)))
 #
 cur_perm = np.random.permutation(len(water_inds))
 water_train_inds  = water_inds[cur_perm[0:num_train_samples]]
@@ -183,7 +185,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 sess = tf.InteractiveSession()
 tf.global_variables_initializer().run()
 # Train
-batch_size=50
+batch_size=10
 tf.global_variables_initializer().run()
 for i in range(int(num_train_samples/batch_size)):
     batch_xs = train_X[(i) * batch_size:(i + 1) * batch_size]
